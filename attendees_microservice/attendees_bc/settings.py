@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "django_crontab"
+    "django_crontab",
     'attendees.apps.AttendeesConfig',
     'django.contrib.admin',
     'django.contrib.auth',
