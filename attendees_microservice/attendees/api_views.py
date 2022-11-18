@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from common.json import ModelEncoder
-from .models import Attendee, ConferenceVO
+from .models import Attendee, ConferenceVO, AccountVO
 from django.views.decorators.http import require_http_methods
 import json
 
@@ -10,9 +10,9 @@ class ConferenceVODetailEncoder(ModelEncoder):
     properties = ["name", "import_href"]
 
 
-class ConferenceNameEncoder(ModelEncoder):
-    model = ConferenceVODetailEncoder
-    properties = ["name"]
+# class ConferenceNameEncoder(ModelEncoder):
+#     model = ConferenceVODetailEncoder
+#     properties = ["name"]
 
 
 class AttendeeDetailEncoder(ModelEncoder):
@@ -25,9 +25,24 @@ class AttendeeDetailEncoder(ModelEncoder):
         "conference",
     ]
     encoders = {
-        "conference": ConferenceNameEncoder(),
+        "conference": ConferenceVODetailEncoder(),
     }
 
+    def get_extra_data(self, o):
+        count = len(AccountVO.objects.filter(email=o.email))
+        if count > 0:
+            return {
+                "has_account": True
+            }
+        else:
+            return {
+                "has_account": False
+            }
+
+
+        # Get the count of AccountVO objects with email equal to o.email
+        # Return a dictionary with "has_account": True if count > 0
+        # Otherwise, return a dictionary with "has_account": False
 
 class AttendeeListEncoder(ModelEncoder):
     model = Attendee
@@ -120,17 +135,6 @@ def api_show_attendee(request, id):
 
     else:
         content = json.loads(request.body)
-
-        try:
-            if "conference" in content:
-                conference = ConferenceVO.objects.get(id=content["conference"])
-                content["conference"] = conference
-        except ConferenceVO.DoesNotExist:
-            return JsonResponse(
-                {"message": "Invalid conference id"},
-                status=400
-            )
-
         Attendee.objects.filter(id=id).update(**content)
         attendee = Attendee.objects.get(id=id)
         return JsonResponse(

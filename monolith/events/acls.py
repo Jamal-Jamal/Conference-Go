@@ -9,9 +9,9 @@ def get_city_photo(city, state):
         "query": f'{city} {state} skyline'
         }
     auth = {"Authorization": PEXELS_API_KEY}
-    response = requests.get(url, headers=auth, params=query)
+    result = requests.get(url, headers=auth, params=query)
 
-    content = json.loads(response.content)
+    content = json.loads(result)
 
     try:
         return {"picture_url": content["photos"][0]["src"]["original"]}
@@ -25,23 +25,26 @@ def get_weather(city, state):
         "appid": OPEN_WEATHER_API_KEY
     }
     geo_url = 'http://api.openweathermap.org/geo/1.0/direct'
-    geo_response = requests.get(geo_url, params=geo_params)
-    geo_content = json.loads(geo_response.content)
-
-    weather_params = {
-        "lat": geo_content[0]['lat'],
-        "lon": geo_content[0]['lon'],
-        "units": "imperial",
-        "appid": OPEN_WEATHER_API_KEY,
-    }
+    geo_response = requests.get(geo_url, params=geo_params).json()
+    try:
+        lat = geo_response[0]['lat']
+        lon = geo_response[0]['lon']
+    except (KeyError, IndexError):
+        return None
+    # weather_params = {
+    #     "lat": geo_response[0]['lat'],
+    #     "lon": geo_response[0]['lon'],
+    #     "units": "imperial",
+    #     "appid": OPEN_WEATHER_API_KEY,
+    # }
     weather_url = "https://api.openweathermap.org/data/2.5/weather"
-    weather_response = requests.get(weather_url, params=weather_params)
-    weather_content = json.loads(weather_response.content)
+    weather_response = requests.get(weather_url, params={"lat": lat, "lon": lon, "appid": OPEN_WEATHER_API_KEY})
+    weather_content = json.loads(weather_response)
 
     try:
         return {
                 "temp": weather_content["main"]["temp"],
                 "description": weather_content["weather"][0]["description"],
             }
-    except (TypeError, IndexError):
+    except (KeyError, IndexError):
         return {"weather": None}
