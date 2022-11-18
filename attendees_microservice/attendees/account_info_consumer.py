@@ -16,7 +16,7 @@ from attendees.models import AccountVO
 
 
 def update_AccountVO(ch, method, properties, body):
-    content = json.loads(body),
+    content = json.loads(body)
     first_name = content["first_name"]
     last_name = content["last_name"]
     email = content["email"]
